@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'appointments.apps.AppointmentsConfig',
 ]
 
+AUTH_USER_MODEL = 'cabinet.User'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
