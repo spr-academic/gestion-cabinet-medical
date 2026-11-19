@@ -15,7 +15,7 @@ validate_eight_digit = RegexValidator(
     )
 
 class User(AbstractUser):
-    pass
+    email = models.EmailField(unique=True)
 
 class Patient(User):
     national_id = models.CharField(
