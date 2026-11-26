@@ -30,3 +30,10 @@ class Patient(User):
     )
 
     birth_date = models.DateField(validators=[validate_birth_date])
+
+class Speciality(models.Model):
+    # ? Assumption: The case study does not specify a maximum length.
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
