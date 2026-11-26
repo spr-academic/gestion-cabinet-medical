@@ -5,8 +5,8 @@ __pycache__/
 .ruff_cache/
 
 # Database
-db.sqlite3
-db.sqlite3-*
+*.db.sqlite3
+*.db.sqlite3-*
 
 # IDE
 .idea/
@@ -23,3 +23,6 @@ db.sqlite3-*
 
 # OS
 .DS_Store
+
+# Uploaded media
+/media/
