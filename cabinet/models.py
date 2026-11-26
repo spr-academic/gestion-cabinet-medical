@@ -1,16 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinLengthValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 def validate_birth_date(value):
     if value >= timezone.localdate():
-        raise ValidationError("Birth date cannot be in the future.")
+        raise ValidationError("Birth date must be before today.")
 
 validate_eight_digit = RegexValidator(
-        regex=r"\A[0-9]{8}\z",
+        regex=r"\A[0-9]{8}\Z",
         message="This field must be exactly 8 digits long."
     )
 
@@ -30,3 +30,27 @@ class Patient(User):
     )
 
     birth_date = models.DateField(validators=[validate_birth_date])
+
+class Speciality(models.Model):
+    # ? Assumption: The case study does not specify a maximum length.
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Doctor(User):
+    registration_number = models.CharField(
+        max_length=6,
+        primary_key=True,
+        validators=[MinLengthValidator(6)]
+    )
+
+    phone_number = models.CharField(
+        max_length=8,
+        validators=[validate_eight_digit]
+    )
+
+    specialities = models.ManyToManyField(Speciality)
+
+    def __str__(self):
+        return f"Dr. {self.first_name} {self.last_name}"
