@@ -1,87 +1,305 @@
-# Étude de cas — Gestion des rendez-vous d’un cabinet médical
+# Case Study
 
-**Cours :** Technologies Web 2.0 · **Année universitaire :** 2026–2027  
-**Source :** `case_study.docx` (2 pages). Ce document reprend les exigences de l'énoncé ; il ne décrit pas encore une implémentation terminée.
+**Medical Practice Appointment Management**
 
-## 1. Objectif
+*Academic Year 2026–2027*
 
-Développer une application web de gestion des rendez-vous d’un cabinet médical avec :
+**Source:** [Original case study](https://docs.google.com/document/d/1g2IsbJFlF6IzqiRNFdevKbZ-xoR8TJ7S/edit)
 
-- un **Front-Office** ;
-- un **Back-Office** ;
-- une **API REST** via **Django REST Framework**.
+English translation of the original assignment. Model names, field names and technical requirements are preserved.
 
-## 2. Modèle métier
+---
 
-L’application comporte quatre entités métier : **Medecin**, **Patient**, **Specialite** et **RendezVous**, ainsi qu’un modèle **User** hérité de `AbstractUser`.
+The goal of this workshop is to develop a web application for managing the appointments of a medical practice using the Django framework, covering both the Back-Office and Front-Office, along with a REST API exposed via Django REST Framework.
 
-### Héritage
+The application revolves around four business entities — **Medecin** (Doctor), **Patient**, **Specialite** (Specialty) and **RendezVous** (Appointment) — two of which (Medecin and Patient) inherit from Django's User entity so they can authenticate.
 
-- `User` hérite de `AbstractUser`.
-- `Medecin` et `Patient` héritent de `User` par **héritage multi-tables**.
-- `username`, `password`, `email`, `first_name` et `last_name` sont hérités ; **ne pas les redéclarer**.
+A central appointment table links a doctor and a patient, and a true many-to-many classification relationship links doctors to their specialties.
 
-### Entités et attributs du diagramme d'analyse
+## Class Diagram
 
-| Entité | Champs indiqués dans le diagramme |
+**User** *(django.contrib.auth.models)*
+
+| Attribute | Type |
 |---|---|
-| `User` | `id`, `username`, `password`, `email`, `first_name`, `last_name` (via `AbstractUser`) |
-| `Medecin` | `matricule_ordre` (chaîne, clé primaire, longueur 6), `telephone` (chaîne, 8 chiffres) |
-| `Patient` | `cin` (chaîne, clé primaire, 8 chiffres), `telephone` (chaîne, 8 chiffres), `date_naissance` (date, au plus tard aujourd'hui) |
-| `Specialite` | `id` (entier), `nom_specialite` (chaîne) |
-| `RendezVous` | `id` (entier), `motif` (texte), `ordonnance` (fichier PDF facultatif), `statut` (`EN_ATTENTE` par défaut), `duree_minutes` (entier, 30 par défaut), `date_rdv` (date/heure future), `date_creation` (date/heure), `date_maj` (date/heure) |
+| id | Integer |
+| username | String |
+| password | String |
+| email | String |
+| first_name | String |
+| last_name | String |
 
-**Statuts présentés dans le diagramme :** `EN_ATTENTE`, `CONFIRME`, `ANNULE`.
+**Medecin** (inherits User)
 
-> Les attributs ci-dessus sont retranscrits à partir du diagramme de classes en page 1. Vérifier leur orthographe et les contraintes exactes contre le document original avant de coder les modèles.
-
-### Associations et cardinalités
-
-| Source | Cible | Multiplicité | Champ / rôle |
-|---|---|---|---|
-| `RendezVous` | `Medecin` | plusieurs → un | `medecin` (praticien) |
-| `RendezVous` | `Patient` | plusieurs → un | `patient` (demandeur) |
-| `Medecin` | `Specialite` | plusieurs ↔ plusieurs | `specialites` (`ManyToManyField` simple) |
-
-**Contraintes de modélisation :**
-
-- `RendezVous` est une entité autonome avec son propre identifiant et deux `ForeignKey` simples vers `Medecin` et `Patient`.
-- Un même couple médecin–patient peut avoir **plusieurs rendez-vous**.
-- Ne **pas** représenter les rendez-vous par un `ManyToManyField` ou une classe `through`.
-- La seule relation `ManyToManyField` demandée relie `Medecin` et `Specialite`, sans `through` personnalisé.
-
-## 3. Mise en place demandée dans l'énoncé
-
-- **Django :** version **5.2 LTS**.
-- **Python :** version **3.12**.
-- **Environnement virtuel :** `env`.
-- **Nom du projet Django :** `GestionCabinetMedical`.
-- **Applications Django :**
-  - `Cabinet` : `User`, `Specialite`, `Medecin`, `Patient` ;
-  - `RendezVous` : `RendezVous`.
-
-## 4. État local connu (distinct des exigences)
-
-L'installation déjà réalisée dans le répertoire `MyProject/` utilise :
-
-| Élément | Exigence du sujet | État local constaté |
+| Attribute | Type | Constraint |
 |---|---|---|
-| Python | 3.12 | 3.14.10 |
-| Django | 5.2 LTS | 5.2.19 |
-| Environnement | `env` | `.venv` géré par `uv` |
-| Projet Django | `GestionCabinetMedical` | `config` |
-| Dossier racine | non précisé | `MyProject` |
-| Applications | `Cabinet`, `RendezVous` | pas encore créées dans les sorties fournies |
-| Base de données | non précisée | SQLite (`db.sqlite3`) |
+| matricule_ordre | String | PK, length = 6 |
+| telephone | String | 8 digits |
 
-**À décider avant de modifier la structure :** faut-il reproduire *exactement* les noms et Python 3.12 demandés pour la remise, ou l'enseignant accepte-t-il une installation équivalente avec `uv` et Python 3.14 ? Le document ne précise pas si ces substitutions sont autorisées.
+**Patient** (inherits User)
 
-## 5. Prochaines étapes proposées (plan, pas exigences supplémentaires)
+| Attribute | Type | Constraint |
+|---|---|---|
+| cin | String | PK, 8 digits |
+| telephone | String | 8 digits |
+| date_naissance | Date | < today |
 
-1. Conserver le document source et ce fichier Markdown dans le dépôt.
-2. Aligner prudemment le nom du projet et les applications avec l'énoncé.
-3. Configurer le modèle utilisateur personnalisé **avant** de créer les migrations métier ; ce choix est sensible dans Django.
-4. Implémenter les modèles et leurs relations, puis les migrations.
-5. Développer progressivement le Back-Office, le Front-Office et l'API REST.
+**Specialite**
 
-> **Périmètre :** seules les deux pages fournies ont été documentées. Aucun parcours utilisateur ni endpoint API précis n'est spécifié dans ces pages.
+| Attribute | Type |
+|---|---|
+| id | Integer |
+| nom_specialite | String |
+
+**RendezVous**
+
+| Attribute | Type | Constraint / Default |
+|---|---|---|
+| id | Integer | |
+| motif | Text | |
+| ordonnance | File [0..1] | .pdf |
+| statut | Statut | default = EN_ATTENTE |
+| duree_minutes | Integer | default = 30 |
+| date_rdv | DateTime | > now |
+| date_creation | DateTime | |
+| date_maj | DateTime | |
+
+**Statut** *(enumeration, used by RendezVous)*
+
+| Value | Label |
+|---|---|
+| EN_ATTENTE | En attente (Pending) |
+| CONFIRME | Confirmé (Confirmed) |
+| ANNULE | Annulé (Cancelled) |
+
+### Relationships
+
+```mermaid
+classDiagram
+    AbstractUser <|-- User
+    User <|-- Medecin
+    User <|-- Patient
+
+    Medecin "*" -- "*" Specialite : specialites
+    Medecin "1" -- "*" RendezVous : medecin
+    Patient "1" -- "*" RendezVous : patient
+
+    class User {
+        Integer id
+        String username
+        String password
+        String email
+        String first_name
+        String last_name
+    }
+
+    class Medecin {
+        String matricule_ordre PK
+        String telephone
+    }
+
+    class Patient {
+        String cin PK
+        String telephone
+        Date date_naissance
+    }
+
+    class Specialite {
+        Integer id
+        String nom_specialite
+    }
+
+    class RendezVous {
+        Integer id
+        Text motif
+        File ordonnance
+        Statut statut
+        Integer duree_minutes
+        DateTime date_rdv
+        DateTime date_creation
+        DateTime date_maj
+    }
+
+    class Statut {
+        <<enumeration>>
+        EN_ATTENTE
+        CONFIRME
+        ANNULE
+    }
+
+    RendezVous --> Statut
+```
+
+### Associations Between Classes
+
+| Source class | Target class | Multiplicity | Role / Name |
+|---|---|---|---|
+| RendezVous | Medecin | * — 1 | praticien (field `medecin`) |
+| RendezVous | Patient | * — 1 | demandeur (field `patient`) |
+| Medecin | Specialite | * — * | Simple ManyToManyField (field `specialites`) |
+| User | AbstractUser | Inheritance | — |
+| Medecin | User | Inheritance | — |
+| Patient | User | Inheritance | — |
+
+**User** is a model that inherits from **AbstractUser**.
+
+**Medecin** and **Patient** both inherit from **User** (multi-table inheritance): every doctor and every patient is also a Django user and therefore already has a username, a password, an email, a first name (`first_name`) and a last name (`last_name`), which must not be redeclared.
+
+**RendezVous** is a standalone associative entity: it has its own identifier and two simple foreign keys (to Medecin and to Patient).
+
+Conceptually, it links doctors and patients, but the same doctor–patient pair can have several appointments, so it is modeled neither with a `ManyToManyField` nor with a `through` class.
+
+The only **ManyToManyField** in the model links **Medecin** and **Specialite** directly, without a custom `through` class.
+
+---
+
+## I. Project Setup
+
+- Django 5.2 (LTS version).
+- Python 3.12.
+- Create a virtual environment named `env`.
+- Create a project named `GestionCabinetMedical`.
+- Create two applications:
+  - `Cabinet`: contains the models User, Specialite, Medecin and Patient.
+  - `RendezVous`: contains the model RendezVous.
+
+---
+
+## II. Database Generation
+
+### 1. Model Implementation
+
+Develop the entities in the `models.py` file of each application (User, Specialite, Medecin and Patient in `Cabinet`; RendezVous in `RendezVous`), based on the class diagram above and respecting the following constraints.
+
+#### User
+
+The `User` model inherits from the predefined `AbstractUser` entity.
+
+> **Translator's note:** The original document mentions `from django.contrib.auth.models import User`. The correct import for the required inheritance is `from django.contrib.auth.models import AbstractUser`.
+
+The `Medecin` and `Patient` models both inherit from the `User` entity.
+
+Inherited attributes must not be redeclared: the patient's last name and first name correspond to `last_name` and `first_name`.
+
+Change the primary key `id` of both models:
+
+- In `Medecin`, it becomes `matricule_ordre`, which must have a fixed length of 6 (`max_length=6` and `MinLengthValidator(6)`).
+- In `Patient`, it becomes `cin`, made of exactly 8 digits (`max_length=8` and `RegexValidator(r'^\d{8}$')`).
+
+Django automatically keeps the `user_ptr` link to `User`.
+
+```python
+class User(AbstractUser):
+    email = models.EmailField("e-mail address", unique=True)
+
+
+class Medecin(User):
+    matricule_ordre = models.CharField(
+        max_length=6,
+        primary_key=True,
+        validators=[MinLengthValidator(6)]
+    )
+
+
+class Patient(User):
+    cin = models.CharField(
+        max_length=8,
+        primary_key=True,
+        validators=[RegexValidator(r'^\d{8}$')]
+    )
+```
+
+#### Telephone Validation
+
+The `telephone` attribute (on `Medecin` and on `Patient`) must follow the Tunisian 8-digit format.
+
+Since both models are in the same file, declare a single `RegexValidator` and reuse it:
+
+```python
+r'^\d{8}$'
+```
+
+#### Specialite
+
+The `Specialite` model contains only one business field, `nom_specialite`, representing an open list (e.g. Cardiology, Dermatology, Pediatrics).
+
+It is linked to `Medecin` by a classic `ManyToManyField` without an intermediate class, because the relationship carries no additional data.
+
+#### Patient
+
+The `Patient` model must respect the following constraints:
+
+- `cin` is the primary key and is therefore unique.
+- `date_naissance` must be earlier than today's date (validation in `clean()` or via a validator).
+
+#### RendezVous
+
+The `RendezVous` model must respect the following constraints:
+
+- `motif` must be a `TextField`.
+
+- `ordonnance` must be a `FileField` (scanned attachment, uploaded by the doctor after the consultation). It is therefore optional (`blank=True`), with `upload_to='ordonnances/'` and a validator restricting the extension to `.pdf` (`FileExtensionValidator`). Configure `MEDIA_URL` and `MEDIA_ROOT` in `settings.py`.
+
+- `statut` must be a choice list:
+  - Pending (En attente).
+  - Confirmed (Confirmé).
+  - Cancelled (Annulé).
+
+  The default value is Pending. Using `models.TextChoices` is recommended.
+
+- `duree_minutes` must be a `PositiveIntegerField` with `default=30`.
+
+- `date_creation` (`auto_now_add=True`) and `date_maj` (`auto_now=True`) are filled in automatically.
+
+- `RendezVous` has two distinct foreign keys:
+  - `medecin`: `ForeignKey` to `Medecin`.
+  - `patient`: `ForeignKey` to `Patient`.
+
+  These are not symmetric roles of a single relationship, but two independent one-to-many relationships.
+
+  Since these models are in the other application, reference them by their full name: `'Cabinet.Medecin'` and `'Cabinet.Patient'`.
+
+- `date_rdv` must be later than the current date and time. Implement this rule in the model's `clean()` method, comparing with `django.utils.timezone.now()`.
+
+  The rule applies on creation or when the date is modified. A past appointment must remain editable, for example, to add the prescription.
+
+- Declare the `Meta` class in which the uniqueness constraint is defined: the same doctor cannot have two appointments at the same `date_rdv`.
+
+  Use `UniqueConstraint` (the recommended form, which replaces `unique_together`), and order appointments by `date_rdv`:
+
+```python
+class Meta:
+    ordering = ['date_rdv']
+    constraints = [
+        models.UniqueConstraint(
+            fields=['medecin', 'date_rdv'],
+            name='unique_medecin_date_rdv'
+        ),
+    ]
+```
+
+#### Notes
+
+> The rule "`date_rdv` later than now" must not be declared as a `CheckConstraint` in `Meta`: a database constraint cannot depend on the current time in this context (SQLite rejects `Now()` in a CHECK, and `datetime.now()` would be frozen at the date the migration was generated).
+>
+> It would also prevent confirming or cancelling an appointment that is already in the past.
+
+> Validators and `clean()` are run by forms (`ModelForm`, admin) and by `full_clean()`, but not by `save()`.
+
+> A primary key (`matricule_ordre`, `cin`) must not be modified after creation: Django would treat the object as a new record linked to the same user (`IntegrityError` on `user_ptr`).
+
+### 2. Database Configuration
+
+Modify the `settings.py` file so that the database name matches the name of your university class.
+
+### 3. Generate Migration Files
+
+```bash
+python manage.py makemigrations Cabinet RendezVous
+```
+
+### 4. Generate the Database Schema
+
+```bash
+python manage.py migrate
+```
