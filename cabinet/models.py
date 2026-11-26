@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinLengthValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -37,3 +37,20 @@ class Speciality(models.Model):
 
     def __str__(self):
         return self.name
+
+class Doctor(User):
+    registration_number = models.CharField(
+        max_length=6,
+        primary_key=True,
+        validators=[MinLengthValidator(6)]
+    )
+
+    phone_number = models.CharField(
+        max_length=8,
+        validators=[validate_eight_digit]
+    )
+
+    specialities = models.ManyToManyField(Speciality)
+
+    def __str__(self):
+        return f"Dr. {self.first_name} {self.last_name}"
