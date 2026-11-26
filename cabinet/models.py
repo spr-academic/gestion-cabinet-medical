@@ -7,10 +7,10 @@ from django.utils import timezone
 
 def validate_birth_date(value):
     if value >= timezone.localdate():
-        raise ValidationError("Birth date cannot be in the future.")
+        raise ValidationError("Birth date must be before today.")
 
 validate_eight_digit = RegexValidator(
-        regex=r"\A[0-9]{8}\z",
+        regex=r"\A[0-9]{8}\Z",
         message="This field must be exactly 8 digits long."
     )
 
